@@ -41,6 +41,7 @@
  */
 #include <assert.h>
 #include <complex.h>
+#include <ctype.h>
 #include <errno.h>
 #include <getopt.h>
 #include <getopt.h>
@@ -54,14 +55,13 @@
 #include <time.h>
 #include <unistd.h>
 
-#define NAME    "blind"
+const char* NAME;
 #define VERSION "0.2.6"
 #define MAX_TEXT_LINE_LEN 2048
 
 #define no_display() getenv("NDISPLAY")
 #define display(...) do { if (!no_display()) printf(""__VA_ARGS__); fflush(stdout); } while (0)
 #define DEBUG(...)   fprintf(stderr, "DEBUG: "__VA_ARGS__)
-#define countof(x) (sizeof(x) / sizeof((x)[0]))
 
 #define RED   "\033[31m"
 #define GREEN "\033[32m"
@@ -217,19 +217,19 @@ void play(char* s)
     if (c) *c = '\0';
 
     // skip spaces and tabs prefix
-    for (; s[idx] == ' '; ++idx) {
+    for (; isspace(s[idx]); ++idx) {
         display(" ");
     }
 
     while (s[idx] != '\0') {
 
         // line end with space
-        if (s[idx] == ' ' && s[idx + 1] == '\0') {
+        if (isspace(s[idx]) && s[idx + 1] == '\0') {
             ++idx; break;
         }
 
         // skip long spaces and tabs
-        if (idx > 0 && s[idx - 1] == ' ' && s[idx] == ' ') {
+        if (idx > 0 && isspace(s[idx - 1]) && isspace(s[idx])) {
             ++idx; display(" "); continue;
         }
 
@@ -333,7 +333,7 @@ void run_file_input(void)
 
     finput = fopen(input_file_path, "r");
     if (!finput) {
-        fprintf(stderr, "fopen: %s: %s\n", strerror(errno), input_file_path);
+        fprintf(stderr, "%s: %s: %s\n", NAME, strerror(errno), input_file_path);
         return;
     }
 
@@ -385,6 +385,9 @@ void handle_siginit(int sig)
 
 void parse_args(int argc, char** argv)
 {
+    char* laststash = strrchr(*argv, '/');
+    NAME = laststash ? laststash + 1 : *argv;
+
     int c;
     for (;;) {
         int option_idx;
@@ -459,12 +462,10 @@ int main(int argc, char** argv)
         input_mode = STRING_INPUT;
     }
 
-    if (input_mode == DEFAULT_INPUT) {
-        run_presets();
-    } else if (input_mode == STRING_INPUT) {
-        run_provided_text(argc, argv);
-    } else if (input_mode == FILE_INPUT) {
-        run_file_input();
+    switch (input_mode) {
+        case STRING_INPUT : run_provided_text(argc, argv); break;
+        case FILE_INPUT   : run_file_input()             ; break;
+        case DEFAULT_INPUT: run_presets()                ; break;
     }
 
     return 0;
