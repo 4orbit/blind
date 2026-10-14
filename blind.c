@@ -41,9 +41,7 @@
  */
 #include <assert.h>
 #include <complex.h>
-#include <ctype.h>
 #include <errno.h>
-#include <getopt.h>
 #include <getopt.h>
 #include <locale.h>
 #include <signal.h>
@@ -56,6 +54,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <wchar.h>
+#include <wctype.h>
 
 const char* NAME;
 #define VERSION "0.2.6"
